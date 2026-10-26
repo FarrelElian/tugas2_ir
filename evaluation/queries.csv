@@ -1,0 +1,11 @@
+﻿query_id,query_text,boolean_query,must,n_dinilai,n_relevan,n_sangat_relevan,doc_relevan,doc_sangat_relevan
+Q1,harga beras naik,harga AND beras AND naik,,17,7,2,D100 D104 D11 D12 D18 D21 D75,D18 D75
+Q2,harga cabai turun,cabai AND (turun OR anjlok),,14,13,5,D10 D105 D11 D138 D144 D27 D28 D29 D33 D44 D45 D48 D83,D138 D144 D27 D44 D83
+Q3,operasi pasar minyak goreng,operasi AND pasar AND minyak AND goreng,,13,8,1,D108 D42 D43 D44 D45 D46 D48 D92,D92
+Q4,stok beras Bulog,bulog AND stok AND beras,,14,14,8,D106 D122 D130 D15 D22 D62 D65 D70 D71 D73 D75 D76 D79 D9,D122 D130 D70 D71 D73 D76 D79 D9
+Q5,inflasi bahan pangan,inflasi AND pangan,,14,12,8,D115 D12 D128 D13 D14 D149 D26 D51 D52 D8 D86 D90,D12 D128 D13 D14 D26 D51 D8 D90
+Q6,harga telur ayam,telur AND (ayam OR harga),,14,13,13,D105 D108 D11 D143 D144 D147 D150 D29 D43 D45 D47 D48 D87,D105 D108 D11 D143 D144 D147 D150 D29 D43 D45 D47 D48 D87
+Q7,bawang merah naik,bawang AND merah AND naik,,14,6,6,D105 D108 D144 D37 D39 D47,D105 D108 D144 D37 D39 D47
+Q8,harga eceran tertinggi HET,harga AND eceran AND tertinggi,,12,5,5,D138 D145 D24 D76 D83,D138 D145 D24 D76 D83
+Q9,impor beras,impor AND beras,,11,8,2,D117 D18 D21 D65 D66 D71 D75 D79,D117 D66
+Q10,satgas pangan sidak pasar,satgas AND pangan AND (sidak OR pasar),,13,8,5,D119 D142 D24 D56 D65 D75 D81 D82,D142 D24 D56 D81 D82

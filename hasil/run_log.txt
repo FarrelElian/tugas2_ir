@@ -1,0 +1,738 @@
+
+====================================================================================================
+TUGAS 2 - RETRIEVAL DATA DAN MESIN PENCARI SEDERHANA | LOG EKSEKUSI
+====================================================================================================
+Waktu eksekusi : 2026-10-26 17:26:06
+Python / OS    : 3.13.7 / Windows-11-10.0.26300-SP0
+pandas / numpy : 2.2.3 / 2.1.3
+Konfigurasi    : stemming=True stopword=True keep_words=['naik'] k1=1.2 b=0.75 top_k=10 pool=10
+
+====================================================================================================
+2. KORPUS DAN PEMBERSIHAN DATA
+====================================================================================================
+                               langkah  sisa dokumen
+                          dokumen awal           151
+         buang doc_id/judul/isi kosong           151
+                 buang duplikat doc_id           151
+                    buang duplikat URL           151
+                  buang duplikat judul           151
+buang duplikat isi (500 karakter awal)           151
+
+Kolom: ['doc_id', 'title', 'url', 'content', 'crawl_date', 'publish_date', 'source', 'n_words', 'keyword_hits']
+doc_id                                                                    title                                                                                                                               url
+    D1                           Bisnis Kura Kura Darat yang Bikin Dompet Gemuk                                      https://finance.detik.com/solusiukm/d-7309999/bisnis-kura-kura-darat-yang-bikin-dompet-gemuk
+    D2                           Pemerintah Mau Buka Lahan Tebu buat Dorong E20                                         https://finance.detik.com/energi/d-8694823/pemerintah-mau-buka-lahan-tebu-buat-dorong-e20
+    D3      Ekspor Baja RI Dapat Tekanan Dunia, Tarif 50% Dipasang di Mana-mana                    https://finance.detik.com/industri/d-8694611/ekspor-baja-ri-dapat-tekanan-dunia-tarif-50-dipasang-di-mana-mana
+    D4          Mendag: Harga Telur Hari Ini Rp 26.200/Kg, Masih di Bawah Acuan           https://finance.detik.com/berita-ekonomi-bisnis/d-8694549/mendag-harga-telur-hari-ini-rp-26-200-kg-masih-di-bawah-acuan
+    D5 Hashim Bantah Indonesia Gelap, Pamer Swasembada Beras-Kesejahteraan Naik https://finance.detik.com/berita-ekonomi-bisnis/d-8694518/hashim-bantah-indonesia-gelap-pamer-swasembada-beras-kesejahteraan-naik
+
+====================================================================================================
+3. PREPROCESSING
+====================================================================================================
+Tahap: case folding -> cleaning (URL, angka, tanda baca) -> tokenisasi -> stopword -> stemming (Sastrawi)
+'naik' di daftar stopword Sastrawi murni : True
+'naik' dibuang oleh sistem ini            : False (KEEP_WORDS: sinyal arah harga)
+
+Contoh dokumen D4: Mendag: Harga Telur Hari Ini Rp 26.200/Kg, Masih di Bawah Acuan
+
+SEBELUM (teks asli)   : Mendag: Harga Telur Hari Ini Rp 26.200/Kg, Masih di Bawah Acuan Menteri Perdagangan (Mendag) Budi Santoso mengakui harga telur mengalami kenaikan sekitar Rp 26.200 per kilogram (kg) dari sebelumnya di level Rp 22.000 per kg. Namun, Budi memastikan harganya masih di bawah Harga Acuan Penjualan (HAP) di tingkat konsumen yang ditetapkan Rp 30.000/kg. "Telur hari ini Rp 26.200-an, 
+
+CASE FOLDING+CLEANING : mendag harga telur hari ini rp kg masih di bawah acuan menteri perdagangan mendag budi santoso mengakui harga telur mengalami kenaikan sekitar rp per kilogram kg dari sebelumnya di level rp per kg namun budi memastikan harganya masih di bawah harga acuan penjualan hap di tingkat konsumen yang ditetapkan rp kg telur hari ini rp an
+
+TOKENISASI            : ['mendag', 'harga', 'telur', 'hari', 'ini', 'rp', 'kg', 'masih', 'di', 'bawah', 'acuan', 'menteri', 'perdagangan', 'mendag', 'budi', 'santoso', 'mengakui', 'harga', 'telur', 'mengalami', 'kenaikan', 'sekitar', 'rp', 'per', 'kilogram']
+
+SETELAH STOPWORD      : ['mendag', 'harga', 'telur', 'acuan', 'menteri', 'perdagangan', 'mendag', 'budi', 'santoso', 'mengakui', 'harga', 'telur', 'mengalami', 'kenaikan', 'level', 'budi', 'harganya', 'harga', 'acuan', 'penjualan', 'hap', 'tingkat', 'konsumen', 'ditetapkan', 'telur']
+
+SETELAH STEMMING      : ['mendag', 'harga', 'telur', 'acu', 'menteri', 'dagang', 'mendag', 'budi', 'santoso', 'aku', 'harga', 'telur', 'alami', 'naik', 'level', 'budi', 'harga', 'harga', 'acu', 'jual', 'hap', 'tingkat', 'konsumen', 'tetap', 'telur']
+
+Jumlah token: tokenisasi = 56 -> stopword = 26 -> akhir = 26
+
+Ukuran vocabulary per tahap:
+             Tahap  Ukuran vocabulary
+   Tokenisasi saja               4477
++ stopword removal               3994
++ stemming (akhir)               2701
+Token total (tanpa filter) = 57137 | token total (akhir) = 32172
+Panjang dokumen (token): mean=213.1 median=197 min=81 max=513
+Dokumen kosong setelah preprocessing: 0
+
+Dampak stemming - variasi kata 'naik' disatukan menjadi satu term:
+kata asli stem  dokumen memuat kata asli (tanpa stemming)
+     naik naik                                         62
+ kenaikan naik                                         67
+menaikkan naik                                          6
+dinaikkan naik                                          0
+  naikkan naik                                          4
+Setelah stemming, dokumen yang memuat term 'naik': 89
+Query 'harga beras naik' diproses menjadi: ['harga', 'beras', 'naik']
+
+Disimpan: C:\tugas2_ir\tugas2_ir\data\dataset_preprocessed.csv (151, 8)
+
+====================================================================================================
+4. INVERTED INDEX
+====================================================================================================
+Jumlah dokumen (N) = 151 | vocabulary = 2701 | avgdl = 213.1 token | total postings = 14786
+
+12 term dengan df tertinggi:
+             df   df/N
+harga       133  0.881
+beras       104  0.689
+pasar       100  0.662
+pangan       98  0.649
+butuh        93  0.616
+perintah     89  0.589
+masyarakat   89  0.589
+naik         89  0.589
+sedia        78  0.517
+stok         75  0.497
+alami        75  0.497
+tingkat      74  0.490
+
+Contoh dictionary, postings list, TF dan DF:
+   kata    term  DF  total TF                         postings (doc_id)    TF tertinggi (doc:tf)
+  beras   beras 104      1004  [D10, D100, D101, D102, D103, D104, ...]  D104:33, D66:29, D78:28
+  cabai   cabai  58       414   [D10, D100, D103, D105, D108, D11, ...]  D74:30, D100:27, D32:23
+  bulog   bulog  48       306 [D101, D102, D103, D106, D109, D113, ...]  D15:20, D73:18, D114:16
+inflasi inflasi  32       224 [D100, D101, D107, D113, D115, D116, ...] D115:27, D86:27, D128:23
+   naik    naik  89       500    [D1, D10, D100, D101, D104, D105, ...]  D11:35, D107:28, D37:17
+ satgas  satgas  18        37 [D101, D112, D118, D134, D140, D142, ...]     D56:6, D142:5, D78:4
+  sidak   sidak   8        23    [D101, D119, D142, D24, D65, D75, ...]      D24:6, D82:5, D65:3
+
+Disimpan: C:\tugas2_ir\tugas2_ir\index\inverted_index.json dan C:\tugas2_ir\tugas2_ir\index\inverted_index.csv
+
+====================================================================================================
+5. BOOLEAN RETRIEVAL (AND, OR, NOT, tanda kurung; prioritas NOT > AND > OR)
+====================================================================================================
+beras AND harga                  ->  87 dokumen | ['D4', 'D5', 'D8', 'D9', 'D10', 'D11'] ...
+beras AND harga AND naik         ->  55 dokumen | ['D4', 'D5', 'D8', 'D10', 'D11', 'D12'] ...
+cabai AND (naik OR turun)        ->  54 dokumen | ['D6', 'D8', 'D10', 'D11', 'D12', 'D14'] ...
+beras AND NOT cabai              ->  71 dokumen | ['D3', 'D4', 'D5', 'D9', 'D15', 'D16'] ...
+inflasi OR bulog                 ->  72 dokumen | ['D4', 'D8', 'D9', 'D12', 'D13', 'D14'] ...
+
+====================================================================================================
+6. TF-IDF, VECTOR SPACE MODEL, COSINE SIMILARITY
+====================================================================================================
+TF      = 1 + log10(tf)         IDF = log10(N/df)         w(t,d) = TF x IDF
+cosine  = sum(w_q * w_d) / (||q|| * ||d||)
+
+Query: 'harga beras naik' -> token: ['harga', 'beras', 'naik']
+
+Bobot query (w_q):
+ term  tf_q  df  idf = log10(N/df)  w_q = (1+log10 tf)*idf
+beras     1 104             0.1619                  0.1619
+harga     1 133             0.0551                  0.0551
+ naik     1  89             0.2296                  0.2296
+||q|| = 0.2863
+
+Dokumen D11 | Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu/Kg!
+ term  tf_d  w_d = (1+log10 tf)*idf    w_q  w_q*w_d
+beras    12                  0.3367 0.1619   0.0545
+harga    29                  0.1357 0.0551   0.0075
+ naik    35                  0.5841 0.2296   0.1341
+  sum(w_q*w_d) = 0.1961 | ||d|| = 7.6827 | cosine = 0.1961 / (7.6827 x 0.2863) = 0.0892 | cek retriever: 0.0892
+  vektor dokumen: 49 dimensi tak-nol dari 2701; bobot terbesar: ii=2.491, super=2.044, hijau=1.735, mayoritas=1.702, kualitas=1.668, pasir=1.656, segar=1.625, pihps=1.480
+
+Dokumen D18 | BPS Catat Harga Beras Naik September 2026, Begini Datanya
+ term  tf_d  w_d = (1+log10 tf)*idf    w_q  w_q*w_d
+beras    19                  0.3690 0.1619   0.0598
+harga    12                  0.1146 0.0551   0.0063
+ naik    15                  0.4996 0.2296   0.1147
+  sum(w_q*w_d) = 0.1808 | ||d|| = 9.5216 | cosine = 0.1808 / (9.5216 x 0.2863) = 0.0663 | cek retriever: 0.0663
+  vektor dokumen: 60 dimensi tak-nol dari 2701; bobot terbesar: grosir=2.774, giling=2.491, ateng=2.380, pilah=2.179, mtm=2.052, yoy=1.823, month=1.823, cakup=1.735
+
+Dokumen D110 | Harga Ayam-Cabai Rawit Merah di Palembang Masih Tinggi, Ini Daftar Lengkapnya
+ term  tf_d  w_d = (1+log10 tf)*idf    w_q  w_q*w_d
+beras     3                  0.2392 0.1619   0.0387
+harga    13                  0.1165 0.0551   0.0064
+ naik     2                  0.2987 0.2296   0.0686
+  sum(w_q*w_d) = 0.1137 | ||d|| = 9.0246 | cosine = 0.1137 / (9.0246 x 0.2863) = 0.0440 | cek retriever: 0.0440
+  vektor dokumen: 79 dimensi tak-nol dari 2701; bobot terbesar: ketentun=2.179, kompak=2.179, nikah=2.179, hajat=1.878, angsur=1.878, liter=1.607, tukas=1.577, ruzuan=1.431
+
+====================================================================================================
+7. BM25 DAN ANALISISNYA (TF, IDF, PANJANG DOKUMEN, SATURASI)
+====================================================================================================
+score = sum IDF(t) * tf*(k1+1) / (tf + k1*(1 - b + b*|d|/avgdl)) ; IDF = ln(1 + (N-df+0,5)/(df+0,5))
+Parameter: k1 = 1.2, b = 0.75
+
+(1) TF SATURATION: komponen TF BM25 (dl = avgdl) jenuh mendekati batas atas k1+1
+ k1  batas atas (k1+1)  tf=1  tf=2  tf=3  tf=5  tf=10  tf=20  tf=30
+0.5                1.5   1.0 1.200 1.286 1.364  1.429  1.463  1.475
+1.2                2.2   1.0 1.375 1.571 1.774  1.964  2.075  2.115
+2.0                3.0   1.0 1.500 1.800 2.143  2.500  2.727  2.812
+Grafik disimpan: C:\tugas2_ir\tugas2_ir\hasil\bm25_saturasi.png
+
+Contoh nyata, term 'beras' pada dokumen dengan tf berbeda (k1=1.2, b=0.75):
+doc_id  tf  dl  komponen_tf_bm25  1+log10(tf)  tf mentah
+    D3   1 172             1.086        1.000          1
+    D8   2 189             1.420        1.301          2
+   D59   5 235             1.748        1.699          5
+   D94  10 256             1.933        2.000         10
+  D121  17 197             2.063        2.230         17
+  D104  33 319             2.095        2.519         33
+
+(2) PENGARUH PANJANG DOKUMEN: tf = 3, panjang dokumen berbeda, b berbeda
+    (makin besar b, dokumen panjang makin dihukum; b = 0 -> panjang diabaikan)
+          dl = 0.25x avgdl  dl = 0.5x avgdl  dl = 1x avgdl  dl = 2x avgdl  dl = 4x avgdl
+b = 0                1.571            1.571          1.571          1.571          1.571
+b = 0.5              1.760            1.692          1.571          1.375          1.100
+b = 0.75             1.872            1.760          1.571          1.294          0.957
+b = 1.0              2.000            1.833          1.571          1.222          0.846
+
+(3) PENGARUH IDF: term jarang bernilai lebih tinggi daripada term umum
+  kata   term  df  df/N  idf_tfidf  idf_bm25
+ harga  harga 133 0.881      0.055     0.130
+ beras  beras 104 0.689      0.162     0.375
+pangan pangan  98 0.649      0.188     0.434
+ cabai  cabai  58 0.384      0.416     0.955
+ bulog  bulog  48 0.318      0.498     1.142
+satgas satgas  18 0.119      0.924     2.106
+ impor  impor   9 0.060      1.225     2.773
+ sidak  sidak   8 0.053      1.276     2.884
+
+====================================================================================================
+8. UJI KEBENARAN IMPLEMENTASI
+====================================================================================================
+Uji korpus mini LULUS: TF-IDF = matriks penuh, BM25 = rumus langsung, Boolean = himpunan, query salah ditolak.
+Korpus asli, query 'harga beras naik': selisih maksimum skor TF-IDF (index vs matriks penuh) = 2.08e-17
+
+====================================================================================================
+9. MESIN PENCARI SEDERHANA - contoh penggunaan (antarmuka web: streamlit run app.py)
+====================================================================================================
+==========================================================================================
+Query: 'harga beras naik' | metode: TFIDF | token query: ['harga', 'beras', 'naik']
+Dokumen cocok: 150 | ditampilkan: Top-3
+
+1. Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu/Kg!
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8670918/harga-cabai-rawit-tambah-mahal-hampir-rp-100-ribu-kg
+   Skor    : 0.0892   [D11]
+   Cuplikan: Komoditas pangan yang mengalami kenaikan harga antara lain beras, cabai, daging sapi dan telur ayam.
+
+2. BPS Catat Harga Beras Naik September 2026, Begini Datanya
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8687587/bps-catat-harga-beras-naik-september-2026-begini-datanya
+   Skor    : 0.0663   [D18]
+   Cuplikan: Badan Pusat Statistik (BPS) mencatat harga beras masih mengalami kenaikan pada September 2026.
+
+3. Sidak ke Pasar, Bos Bulog Temukan Harga Beras Premium Naik
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8649586/sidak-ke-pasar-bos-bulog-temukan-harga-beras-premium-naik
+   Skor    : 0.0547   [D75]
+   Cuplikan: Berdasarkan pantauan detikcom , Sabtu (5/9/2026), saat memantau harga beras di salan satu kios, pedagang mengatakan terjadi kenaikan harga beras premium.
+
+==========================================================================================
+Query: 'harga beras naik' | metode: BM25 | token query: ['harga', 'beras', 'naik']
+Dokumen cocok: 150 | ditampilkan: Top-3
+
+1. Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu/Kg!
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8670918/harga-cabai-rawit-tambah-mahal-hampir-rp-100-ribu-kg
+   Skor    : 2.1432   [D11]
+   Cuplikan: Komoditas pangan yang mengalami kenaikan harga antara lain beras, cabai, daging sapi dan telur ayam.
+
+2. BPS Catat Harga Beras Naik September 2026, Begini Datanya
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8687587/bps-catat-harga-beras-naik-september-2026-begini-datanya
+   Skor    : 2.1357   [D18]
+   Cuplikan: Badan Pusat Statistik (BPS) mencatat harga beras masih mengalami kenaikan pada September 2026.
+
+3. Sidak ke Pasar, Bos Bulog Temukan Harga Beras Premium Naik
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8649586/sidak-ke-pasar-bos-bulog-temukan-harga-beras-premium-naik
+   Skor    : 2.0325   [D75]
+   Cuplikan: Berdasarkan pantauan detikcom , Sabtu (5/9/2026), saat memantau harga beras di salan satu kios, pedagang mengatakan terjadi kenaikan harga beras premium.
+
+==========================================================================================
+Query: 'beras AND harga AND naik' | metode: BOOLEAN | token query: ['beras', 'harga', 'naik']
+Dokumen cocok: 55 | ditampilkan: Top-3
+
+1. Mendag: Harga Telur Hari Ini Rp 26.200/Kg, Masih di Bawah Acuan
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8694549/mendag-harga-telur-hari-ini-rp-26-200-kg-masih-di-bawah-acuan
+   Skor    : cocok (Boolean tidak berskor)   [D4]
+   Cuplikan: Menteri Perdagangan (Mendag) Budi Santoso mengakui harga telur mengalami kenaikan sekitar Rp 26.200 per kilogram (kg) dari sebelumnya di level Rp 22.000 per kg.
+
+2. Hashim Bantah Indonesia Gelap, Pamer Swasembada Beras-Kesejahteraan Naik
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8694518/hashim-bantah-indonesia-gelap-pamer-swasembada-beras-kesejahteraan-naik
+   Skor    : cocok (Boolean tidak berskor)   [D5]
+   Cuplikan: Salah satunya dengan menaikkan harga pembelian pemerintah (HPP) untuk gabah/beras sebesar 50% dari Rp 4.000 menjadi Rp 6.500 dan memangkas harga pupuk sebesar 20%.
+
+3. Cabai Rawit-Daging Ayam Jadi Biang Kerok Inflasi RI
+   URL     : https://finance.detik.com/berita-ekonomi-bisnis/d-8687452/cabai-rawit-daging-ayam-jadi-biang-kerok-inflasi-ri
+   Skor    : cocok (Boolean tidak berskor)   [D8]
+   Cuplikan: Kenaikan harga komoditas pangan menjadi pemicunya, khususnya komoditas cabai hingga daging ayam.
+
+==========================================================================================
+Query: 'kucing terbang' | metode: BM25 | token query: ['kucing', 'terbang']
+Dokumen cocok: 2 | ditampilkan: Top-2
+
+1. Bisnis Kura Kura Darat yang Bikin Dompet Gemuk
+   URL     : https://finance.detik.com/solusiukm/d-7309999/bisnis-kura-kura-darat-yang-bikin-dompet-gemuk
+   Skor    : 5.6015   [D1]
+   Cuplikan: Meski hewan peliharaan yang kerap dijumpai identik dengan anjing dan kucing, ternyata jenis reptil seperti kura kura darat juga cukup populer bagi masyarakat Indonesia.
+
+2. Harga Pangan Naik, Siska Minta Distributor Aktif Koordinasi dengan Pemkot
+   URL     : https://www.detik.com/sulsel/berita/d-8655277/harga-pangan-naik-siska-minta-distributor-aktif-koordinasi-dengan-pemkot
+   Skor    : 4.7559   [D13]
+   Cuplikan: Menurut Siska, persoalan transportasi yang turut memengaruhi inflasi sebagian besar berada dalam ranah kebijakan nasional, mulai dari harga tiket, keterbatasan penerbangan hingga kondisi keadaan di luar kendali seperti penutupan bandara.
+
+==========================================================================================
+Query: 'dan yang di' | metode: BM25 | token query: []
+
+>> Query hanya berisi kata yang dibuang saat preprocessing (stopword/angka/simbol). Coba kata yang lebih spesifik.
+
+
+====================================================================================================
+10. EKSPERIMEN 1 - Top-5 dan skor, TF-IDF+cosine vs BM25 untuk 10 query uji
+====================================================================================================
+Q1   harga beras naik               token=['harga', 'beras', 'naik'] | boolean:  55 dok | tfidf/bm25 cocok: 150/150
+Q2   harga cabai turun              token=['harga', 'cabai', 'turun'] | boolean:  43 dok | tfidf/bm25 cocok: 133/133
+Q3   operasi pasar minyak goreng    token=['operasi', 'pasar', 'minyak', 'goreng'] | boolean:   4 dok | tfidf/bm25 cocok: 112/112
+Q4   stok beras Bulog               token=['stok', 'beras', 'bulog'] | boolean:  38 dok | tfidf/bm25 cocok: 125/125
+Q5   inflasi bahan pangan           token=['inflasi', 'bahan', 'pangan'] | boolean:  23 dok | tfidf/bm25 cocok: 123/123
+Q6   harga telur ayam               token=['harga', 'telur', 'ayam'] | boolean:  41 dok | tfidf/bm25 cocok: 134/134
+Q7   bawang merah naik              token=['bawang', 'merah', 'naik'] | boolean:  33 dok | tfidf/bm25 cocok: 105/105
+Q8   harga eceran tertinggi HET     token=['harga', 'ecer', 'tinggi', 'het'] | boolean:  16 dok | tfidf/bm25 cocok: 135/135
+Q9   impor beras                    token=['impor', 'beras'] | boolean:   8 dok | tfidf/bm25 cocok: 105/105
+Q10  satgas pangan sidak pasar      token=['satgas', 'pangan', 'sidak', 'pasar'] | boolean:  16 dok | tfidf/bm25 cocok: 135/135
+
+Q1 | 'harga beras naik' | token: ['harga', 'beras', 'naik']
+ rank                                            TF-IDF judul  TF-IDF skor                                              BM25 judul  BM25 skor
+    1 D11: Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu       0.0892 D11: Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu     2.1432
+    2 D18: BPS Catat Harga Beras Naik September 2026, Begini        0.0663 D18: BPS Catat Harga Beras Naik September 2026, Begini      2.1357
+    3 D75: Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem       0.0547 D75: Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem     2.0325
+    4 D45: Harga Sembako Jatim Hari Ini: Daging Ayam, Minyak        0.0542 D37: Harga Cabai Rawit-Bawang di Pasar Galiran Naik Jel     1.9174
+    5 D29: Harga Sembako Jatim Hari Ini: Cabai Naik Semua, Ay       0.0540 D12: Pramono: Harga Pangan di Jakarta Naik Sedikit, tap     1.8880
+
+Q2 | 'harga cabai turun' | token: ['harga', 'cabai', 'turun']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1 D144: Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per       0.1408  D27: Harga Cabai di Medan Turun, Jadi Rp 75 Ribu per Kg     3.8415
+    2  D11: Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu       0.1374  D42: Harga Minyak Goreng Subsidi Capai Rp 20.000/Liter      3.8224
+    3   D10: Harga Cabai Rawit Merah di Palembang Masih Tinggi       0.1236  D83: Harga Cabai Merah-Daging Ayam di Sumut Mulai Turun     3.7964
+    4  D29: Harga Sembako Jatim Hari Ini: Cabai Naik Semua, Ay       0.1226 D138: Sempat Naik, Harga Cabai Merah di Sumut Kembali Le     3.7941
+    5 D105: Naik Turun Harga Sembako di Jawa Timur, Cek Daftar       0.1215  D28: Harga Cabai di Palembang Masih Tinggi, Pedagang Ku     3.7283
+
+Q3 | 'operasi pasar minyak goreng' | token: ['operasi', 'pasar', 'minyak', 'goreng']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1  D92: Bulog Sumsel Babel Gencarkan Operasi Pasar Migor,        0.2291  D92: Bulog Sumsel Babel Gencarkan Operasi Pasar Migor,     10.8264
+    2 D143: Harga Ayam Potong dan Telur di Palembang Naik Lagi       0.1679 D143: Harga Ayam Potong dan Telur di Palembang Naik Lagi     7.8227
+    3 D120: Herman Deru Pastikan Stok Beras di Sumsel Aman hin       0.1385  D42: Harga Minyak Goreng Subsidi Capai Rp 20.000/Liter      6.3583
+    4  D43: Harga Sembako Jatim Hari Ini: Minyak Goreng, Gas E       0.1235  D43: Harga Sembako Jatim Hari Ini: Minyak Goreng, Gas E     6.0812
+    5  D42: Harga Minyak Goreng Subsidi Capai Rp 20.000/Liter        0.1227  D46: Harga Sembako Jatim Hari Ini: Minyak Goreng, Dagin     5.9146
+
+Q4 | 'stok beras Bulog' | token: ['stok', 'beras', 'bulog']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1             D71: Stok Beras Nasional Tembus 4,8 Juta Ton       0.1661  D70: Stok Tembus 4,8 Juta Ton, Gudang Bulog Tak Muat La     4.5227
+    2  D70: Stok Tembus 4,8 Juta Ton, Gudang Bulog Tak Muat La       0.1597             D71: Stok Beras Nasional Tembus 4,8 Juta Ton     4.4964
+    3 D106: Sumut Dapat Pasokan 4.434 Ton Beras dari Jatim, Bu       0.1163 D122: Herman Deru Pastikan Stok Beras di Sumsel Aman Usa     4.4291
+    4  D76: Jaga Harga Sesuai HET, Jajaran BULOG Gelontorkan B       0.1142  D65: BULOG & Komisi IV DPR Sidak Pasar Induk Beras Cipi     4.3253
+    5  D22: Beras 5 Kilogram Masih Sulit Dicari, BI Ungkap Gab       0.1073  D79: Beras di Toko Ritel Modern Kosong, Bulog Diminta G     4.2945
+
+Q5 | 'inflasi bahan pangan' | token: ['inflasi', 'bahan', 'pangan']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1 D149: Inflasi Tahunan Sumsel Tercatat 2,89%, Lebih Renda       0.1342 D149: Inflasi Tahunan Sumsel Tercatat 2,89%, Lebih Renda     4.9731
+    2                   D52: BPS Catat Inflasi September 0,30%       0.1285  D12: Pramono: Harga Pangan di Jakarta Naik Sedikit, tap     4.8867
+    3  D12: Pramono: Harga Pangan di Jakarta Naik Sedikit, tap       0.1253  D86: Kenaikan BBM Penyumbang Inflasi Terbesar di Bali p     4.7605
+    4  D90: Cabai dan Tiket Pesawat Catat Inflasi Tertinggi di       0.1148  D90: Cabai dan Tiket Pesawat Catat Inflasi Tertinggi di     4.7162
+    5 D128: Inflasi Agustus 0,21%, Didorong Daging Ayam-Emas P       0.1137 D147: Harga Telur Ayam di Palembang Turun Dipicu Pasokan     4.7116
+
+Q6 | 'harga telur ayam' | token: ['harga', 'telur', 'ayam']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1 D144: Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per       0.1725 D147: Harga Telur Ayam di Palembang Turun Dipicu Pasokan     5.0542
+    2  D47: Harga Sembako Jatim Hari Ini: Minyak Goreng, Telur       0.1572 D150: Harga Telur Ayam di Sumsel Anjlok, DKPP Sebut Imba     4.9808
+    3  D45: Harga Sembako Jatim Hari Ini: Daging Ayam, Minyak        0.1556 D143: Harga Ayam Potong dan Telur di Palembang Naik Lagi     4.7628
+    4  D29: Harga Sembako Jatim Hari Ini: Cabai Naik Semua, Ay       0.1455  D47: Harga Sembako Jatim Hari Ini: Minyak Goreng, Telur     4.7534
+    5  D87: Harga Sembako Jatim Hari Ini: Cabai Melonjak, Miny       0.1419  D45: Harga Sembako Jatim Hari Ini: Daging Ayam, Minyak      4.6799
+
+Q7 | 'bawang merah naik' | token: ['bawang', 'merah', 'naik']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1 D144: Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per       0.1919  D39: Stok Menipis, Bawang Merah di Pasar Lakessi Parepa     5.3220
+    2  D11: Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu       0.1653 D144: Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per     5.2904
+    3   D10: Harga Cabai Rawit Merah di Palembang Masih Tinggi       0.1505  D91: Harga Sayur di Pasar Peterongan Semarang Terus Nai     5.2435
+    4 D108: Harga Sembako Jatim Hari Ini: Minyak Goreng, Bawan       0.1485 D108: Harga Sembako Jatim Hari Ini: Minyak Goreng, Bawan     4.9735
+    5 D105: Naik Turun Harga Sembako di Jawa Timur, Cek Daftar       0.1390 D136: Harga Cabai-Ayam Terus Naik, Disdag Palembang Ungk     4.9266
+
+Q8 | 'harga eceran tertinggi HET' | token: ['harga', 'ecer', 'tinggi', 'het']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1  D83: Harga Cabai Merah-Daging Ayam di Sumut Mulai Turun       0.2098  D83: Harga Cabai Merah-Daging Ayam di Sumut Mulai Turun     7.9133
+    2 D106: Sumut Dapat Pasokan 4.434 Ton Beras dari Jatim, Bu       0.1748   D6: Cabai Merah di Sumut Makin Pedas, Harga Tembus Rp      7.3451
+    3  D76: Jaga Harga Sesuai HET, Jajaran BULOG Gelontorkan B       0.1677 D145: Pedagang Olahan Ayam di Medan Menjerit, Harga Maha     7.0938
+    4  D75: Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem       0.1499 D138: Sempat Naik, Harga Cabai Merah di Sumut Kembali Le     6.8212
+    5 D138: Sempat Naik, Harga Cabai Merah di Sumut Kembali Le       0.1426  D24: Sidak Produsen dan Toko Beras di Kota Blitar, Ini      6.7421
+
+Q9 | 'impor beras' | token: ['impor', 'beras']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1  D79: Beras di Toko Ritel Modern Kosong, Bulog Diminta G       0.1474 D117: Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus     5.5574
+    2 D117: Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus       0.1463  D79: Beras di Toko Ritel Modern Kosong, Bulog Diminta G     4.8187
+    3  D12: Pramono: Harga Pangan di Jakarta Naik Sedikit, tap       0.1389  D66: Cek Pasar Induk Cipinang, Titiek Soeharto Sebut St     4.7211
+    4  D18: BPS Catat Harga Beras Naik September 2026, Begini        0.1326  D21: Beras di Ritel Modern Kosong Imbas Fortifikasi Dis     4.7056
+    5  D21: Beras di Ritel Modern Kosong Imbas Fortifikasi Dis       0.1277   D3: Ekspor Baja RI Dapat Tekanan Dunia, Tarif 50% Dipa     4.4375
+
+Q10 | 'satgas pangan sidak pasar' | token: ['satgas', 'pangan', 'sidak', 'pasar']
+ rank                                             TF-IDF judul  TF-IDF skor                                               BM25 judul  BM25 skor
+    1  D82: Jaga Stabilitas Harga, Satgas Pangan Polres Blitar       0.2481  D82: Jaga Stabilitas Harga, Satgas Pangan Polres Blitar    10.4008
+    2  D24: Sidak Produsen dan Toko Beras di Kota Blitar, Ini        0.1735  D24: Sidak Produsen dan Toko Beras di Kota Blitar, Ini      9.7395
+    3 D142: Satgas Saber Pangan Sidak di Palembang, Stok dan H       0.1710 D142: Satgas Saber Pangan Sidak di Palembang, Stok dan H     8.1010
+    4  D75: Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem       0.1582  D81: Pemerintah Siapkan Pasar Murah Cegah Harga Beras N     8.0028
+    5  D81: Pemerintah Siapkan Pasar Murah Cegah Harga Beras N       0.1414  D65: BULOG & Komisi IV DPR Sidak Pasar Induk Beras Cipi     7.4196
+
+Disimpan: C:\tugas2_ir\tugas2_ir\hasil\hasil_ranking_topk.csv (top-10 lengkap dengan URL dan cuplikan)
+
+====================================================================================================
+11. POOLING DAN RELEVANCE JUDGMENT
+====================================================================================================
+Sumber label: qrels_template.csv | QRELS_MODE = MANUAL
+Template v2: 136 baris | BARU (perlu dilabeli): 0 | sudah berlabel: 136
+          baris  BARU
+query_id             
+Q1           17     0
+Q2           14     0
+Q3           13     0
+Q4           14     0
+Q5           14     0
+Q6           14     0
+Q7           14     0
+Q8           12     0
+Q9           11     0
+Q10          13     0
+Disimpan: C:\tugas2_ir\tugas2_ir\evaluation\qrels_template_v2.csv
+                     Q1  Q2  Q3  Q4  Q5  Q6  Q7  Q8  Q9  Q10
+dinilai              17  14  13  14  14  14  14  12  11   13
+relevan (>=1)         7  13   8  14  12  13   6   5   8    8
+sangat relevan (=2)   2   5   1   8   8  13   6   5   2    5
+
+====================================================================================================
+12. EVALUASI | mode label: MANUAL
+====================================================================================================
+Ringkasan - relevansi LONGGAR (grade >= 1), rata-rata atas query:
+               P@5     R@5    F1@5  P@10    R@10   F1@10     MAP  MRR  nDCG@10
+method                                                                        
+tfidf         0.82  0.4572  0.5717  0.70  0.7398  0.6999  0.7883  1.0   0.7710
+bm25          0.84  0.4879  0.6009  0.76  0.8474  0.7797  0.8521  1.0   0.8825
+boolean_bm25  0.78  0.4504  0.5547  0.66  0.7224  0.6685  0.7232  1.0   0.8362
+
+Ringkasan - relevansi KETAT (grade = 2):
+               P@5     R@5    F1@5  P@10    R@10   F1@10     MAP     MRR  nDCG@10
+method                                                                           
+tfidf         0.52  0.5735  0.4815  0.41  0.8011  0.4907  0.6694  0.8333   0.7710
+bm25          0.60  0.6835  0.5700  0.48  0.9276  0.5812  0.7925  0.9000   0.8825
+boolean_bm25  0.62  0.6960  0.5854  0.49  0.9401  0.5923  0.7946  0.9000   0.8362
+
+Cakupan penilaian (persen top-10 yang sudah berlabel; sisanya dianggap tidak relevan):
+query_id   Q1   Q2   Q3   Q4   Q5   Q6   Q7   Q8   Q9  Q10
+tfidf     1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
+bm25      1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
+Rata-rata cakupan -> TF-IDF: 1.000 | BM25: 1.000
+
+Boolean retrieval (set-based; presisi hanya pada dokumen hasil yang berlabel):
+query_id                                 boolean  n_hasil  n_berlabel  Precision(berlabel)  Recall     F1
+      Q1                harga AND beras AND naik       55          16               0.4375  1.0000 0.6087
+      Q2             cabai AND (turun OR anjlok)       43          14               0.9286  1.0000 0.9630
+      Q3 operasi AND pasar AND minyak AND goreng        4           4               0.2500  0.1250 0.1667
+      Q4                bulog AND stok AND beras       38          14               1.0000  1.0000 1.0000
+      Q5                      inflasi AND pangan       23          10               0.8000  0.6667 0.7273
+      Q6               telur AND (ayam OR harga)       41          14               0.9286  1.0000 0.9630
+      Q7               bawang AND merah AND naik       33          14               0.4286  1.0000 0.6000
+      Q8          harga AND eceran AND tertinggi       16          10               0.5000  1.0000 0.6667
+      Q9                         impor AND beras        8           8               0.7500  0.7500 0.7500
+     Q10  satgas AND pangan AND (sidak OR pasar)       16          11               0.5455  0.7500 0.6316
+Rata-rata Boolean -> Precision(berlabel): 0.6569 | Recall: 0.8292 | F1: 0.7077
+
+Per-query AP, nDCG@10, P@10, F1@10 (TF-IDF vs BM25):
+             AP        nDCG@10        P@10        F1@10       
+method     bm25  tfidf    bm25  tfidf bm25 tfidf   bm25  tfidf
+query_id                                                      
+Q1        0.909  0.538   0.838  0.637  0.7   0.3  0.824  0.353
+Q2        0.834  0.931   0.869  0.748  0.9   1.0  0.783  0.870
+Q3        0.797  0.653   0.937  0.800  0.8   0.6  0.889  0.667
+Q4        0.916  0.943   0.968  0.855  1.0   1.0  0.833  0.833
+Q5        0.869  0.930   0.691  0.658  0.8   0.9  0.727  0.818
+Q6        0.946  0.990   0.934  1.000  0.9   1.0  0.783  0.870
+Q7        0.678  0.546   0.802  0.651  0.5   0.4  0.625  0.500
+Q8        0.810  0.624   0.907  0.738  0.5   0.4  0.667  0.533
+Q9        0.808  0.785   0.899  0.744  0.7   0.7  0.778  0.778
+Q10       0.953  0.943   0.980  0.879  0.8   0.7  0.889  0.778
+
+Uji signifikansi (bootstrap berpasangan atas query, 5.000 resampling; CI memuat 0 = selisih tidak bermakna):
+Relevansi longgar:
+         n_query  rata2_BM25  rata2_TFIDF  selisih  CI95_bawah  CI95_atas  menang_BM25  seri  menang_TFIDF
+AP          10.0      0.8521       0.7883   0.0638     -0.0124     0.1539          6.0   0.0           4.0
+nDCG@10     10.0      0.8825       0.7710   0.1116      0.0605     0.1512          9.0   0.0           1.0
+P@10        10.0      0.7600       0.7000   0.0600     -0.0300     0.1600          5.0   2.0           3.0
+F1@10       10.0      0.7797       0.6999   0.0797     -0.0156     0.1913          5.0   2.0           3.0
+Relevansi ketat:
+         n_query  rata2_BM25  rata2_TFIDF  selisih  CI95_bawah  CI95_atas  menang_BM25  seri  menang_TFIDF
+AP          10.0      0.7925       0.6694   0.1231      0.0458     0.2098          7.0   2.0           1.0
+nDCG@10     10.0      0.8825       0.7710   0.1116      0.0605     0.1512          9.0   0.0           1.0
+P@10        10.0      0.4800       0.4100   0.0700      0.0100     0.1200          6.0   3.0           1.0
+F1@10       10.0      0.5812       0.4907   0.0905      0.0250     0.1547          6.0   3.0           1.0
+
+Grafik disimpan: C:\tugas2_ir\tugas2_ir\hasil\perbandingan_metode.png
+
+====================================================================================================
+13. EKSPERIMEN 2 - Perbedaan ranking VSM cosine vs BM25
+====================================================================================================
+          overlap_top10 (Jaccard)  AP BM25 - TFIDF  |selisih AP|
+query_id                                                        
+Q1                          0.176            0.372         0.372
+Q8                          0.667            0.186         0.186
+Q3                          0.667            0.144         0.144
+Q7                          0.429            0.132         0.132
+Q2                          0.429           -0.096         0.096
+Q5                          0.538           -0.061         0.061
+Q6                          0.429           -0.044         0.044
+Q4                          0.429           -0.027         0.027
+Q9                          0.818            0.022         0.022
+Q10                         0.667            0.010         0.010
+Rata-rata Jaccard top-10: 0.525
+
+----------------------------------------------------------------------------------------------------
+Q1 | 'harga beras naik' | token: ['harga', 'beras', 'naik'] | AP BM25=0.909 | AP TF-IDF=0.538
+doc_id  rank_tfidf  rank_bm25  geser (tfidf-bm25)  dl  tf_term_query  label                                                   judul
+   D11           1          1                   0 230             76      1  Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu/Kg!
+   D18           2          2                   0 172             46      2 BPS Catat Harga Beras Naik September 2026, Begini Datan
+   D75           3          3                   0 148             35      2 Sidak ke Pasar, Bos Bulog Temukan Harga Beras Premium N
+   D45           4         31                 -27 208             23      0 Harga Sembako Jatim Hari Ini: Daging Ayam, Minyak Goren
+   D37          29          4                  25 166             34      0 Harga Cabai Rawit-Bawang di Pasar Galiran Naik Jelang G
+   D29           5         30                 -25 193             22      0 Harga Sembako Jatim Hari Ini: Cabai Naik Semua, Ayam Ra
+   D12          12          5                   7 100             16      1 Pramono: Harga Pangan di Jakarta Naik Sedikit, tapi Tak
+  D144           6         58                 -52 164             27      0   Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per Kg
+  D100          49          6                  43 434             48      1     Harga Cabai Rawit Makin Pedas, Tembus Rp 90 Ribu/Kg
+  D105           7         35                 -28 205             22      0   Naik Turun Harga Sembako di Jawa Timur, Cek Daftarnya
+   D21          32          7                  25 191             26      1 Beras di Ritel Modern Kosong Imbas Fortifikasi Disetop,
+   D46           8         29                 -21 204             23      0 Harga Sembako Jatim Hari Ini: Minyak Goreng, Daging Aya
+  D104          46          8                  38 319             46      1 Beras 5 Kg Langkah di Pasar Palembang, Ritel Batasi Pem
+   D48           9         32                 -23 208             23      0 Harga Sembako Jatim Hari Ini: Minyak Goreng dan Elpiji 
+  D133          13          9                   4 161             20      0 DKPP Awasi Kenaikan Harga Daging Sapi-Ayam Jelang Lebar
+  D108          10         34                 -24 200             22      0 Harga Sembako Jatim Hari Ini: Minyak Goreng, Bawang Mer
+  D124          43         10                  33 213             21      0 Atasi Kenaikan Harga, Pemkot Medan Gelar Pasar Murah di
+
+Dokumen dengan pergeseran peringkat terbesar: D144 (dl=164, avgdl=213.1, faktor panjang=0.827) - penguraian skor per term:
+ term  tf  df  idf_tfidf  kontrib_cosine  idf_bm25  komponen_tf_bm25  kontrib_bm25
+beras   0 104     0.1619          0.0000    0.3747            0.0000        0.0000
+harga  18 133     0.0551          0.0033    0.1298            2.0850        0.2706
+ naik   9  89     0.2296          0.0501    0.5296            1.9814        1.0495
+
+----------------------------------------------------------------------------------------------------
+Q8 | 'harga eceran tertinggi HET' | token: ['harga', 'ecer', 'tinggi', 'het'] | AP BM25=0.810 | AP TF-IDF=0.624
+doc_id  rank_tfidf  rank_bm25  geser (tfidf-bm25)  dl  tf_term_query  label                                                   judul
+   D83           1          1                   0 131             29      2 Harga Cabai Merah-Daging Ayam di Sumut Mulai Turun, Nam
+  D106           2          8                  -6  98              5      0 Sumut Dapat Pasokan 4.434 Ton Beras dari Jatim, Bulog K
+    D6           6          2                   4 121             27      0 Cabai Merah di Sumut Makin Pedas, Harga Tembus Rp 92.50
+   D76           3          6                  -3 204             18      2 Jaga Harga Sesuai HET, Jajaran BULOG Gelontorkan Beras 
+  D145          10          3                   7 120             14      2 Pedagang Olahan Ayam di Medan Menjerit, Harga Mahal-Sus
+   D75           4          7                  -3 148             14      0 Sidak ke Pasar, Bos Bulog Temukan Harga Beras Premium N
+  D138           5          4                   1  96             19      2 Sempat Naik, Harga Cabai Merah di Sumut Kembali Lesu Ak
+   D24          11          5                   6 239             19      2 Sidak Produsen dan Toko Beras di Kota Blitar, Ini Temua
+  D142           7         11                  -4 230             22      0 Satgas Saber Pangan Sidak di Palembang, Stok dan Harga 
+   D20           8          9                  -1 147             16      0          Mentan Yakin dalam Seminggu Harga Beras Turun!
+   D80           9         14                  -5 189              8      0 Dirut Pasar Palembang Pastikan Beras 5 Kg Aman-Minta Ma
+   D81          13         10                   3 169             11      0 Pemerintah Siapkan Pasar Murah Cegah Harga Beras Naik d
+
+Dokumen dengan pergeseran peringkat terbesar: D145 (dl=120, avgdl=213.1, faktor panjang=0.672) - penguraian skor per term:
+  term  tf  df  idf_tfidf  kontrib_cosine  idf_bm25  komponen_tf_bm25  kontrib_bm25
+  ecer   1  22     0.8366          0.0428    1.9104            1.2176        2.3260
+ harga   9 133     0.0551          0.0004    0.1298            2.0190        0.2620
+   het   2  18     0.9237          0.0679    2.1061            1.5676        3.3015
+tinggi   2  70     0.3339          0.0089    0.7683            1.5676        1.2043
+
+====================================================================================================
+14. EKSPERIMEN 3 - Query pendek dan spesifik (pengaruh tf dan panjang dokumen)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+Query 'bulog' -> token ['bulog'] | dokumen cocok: 48 | df term: [48]
+TF-IDF + cosine, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1    D71   9 110 0.1368            Stok Beras Nasional Tembus 4,8 Juta Ton
+    2    D70  11 114 0.1334 Stok Tembus 4,8 Juta Ton, Gudang Bulog Tak Muat La
+    3    D76  11 204 0.1007 Jaga Harga Sesuai HET, Jajaran BULOG Gelontorkan B
+    4    D22   7 158 0.0954 Beras 5 Kilogram Masih Sulit Dicari, BI Ungkap Gab
+    5    D75   7 148 0.0922 Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem
+BM25, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1    D70  11 114 2.3464 Stok Tembus 4,8 Juta Ton, Gudang Bulog Tak Muat La
+    2    D71   9 110 2.3163            Stok Beras Nasional Tembus 4,8 Juta Ton
+    3    D15  20 344 2.3106 Jajaran BULOG Seluruh RI Turun ke Pasar, Pastikan 
+    4   D122  11 168 2.3018 Herman Deru Pastikan Stok Beras di Sumsel Aman Usa
+    5    D73  18 327 2.2984 Stok Beras di Wilayah Sumsel Babel Aman, Bulog Mas
+
+----------------------------------------------------------------------------------------------------
+Query 'satgas' -> token ['satgas'] | dokumen cocok: 18 | df term: [18]
+TF-IDF + cosine, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1   D142   5 230 0.1335 Satgas Saber Pangan Sidak di Palembang, Stok dan H
+    2    D82   2 108 0.1196 Jaga Stabilitas Harga, Satgas Pangan Polres Blitar
+    3   D134   1 147 0.0938 Pemprov Sumsel Pastikan Stok Daging Sapi Aman Jela
+    4   D112   1 116 0.0917 Mentan Ungkap Aksi Culas Bisnis Beras, Masyarakat 
+    5    D56   6 267 0.0906 Satgas Pangan Lampung Mulai Pantau Beras Fortifika
+BM25, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1    D56   6 267 3.7428 Satgas Pangan Lampung Mulai Pantau Beras Fortifika
+    2   D142   5 230 3.6940 Satgas Saber Pangan Sidak di Palembang, Stok dan H
+    3    D82   2 108 3.3622 Jaga Stabilitas Harga, Satgas Pangan Polres Blitar
+    4    D24   3 239 3.2255 Sidak Produsen dan Toko Beras di Kota Blitar, Ini 
+    5   D101   2 177 3.0406 Beras Langka, Bulog Gelontorkan Stok 110.000 Ton k
+
+----------------------------------------------------------------------------------------------------
+Query 'sidak' -> token ['sidak'] | dokumen cocok: 8 | df term: [8]
+TF-IDF + cosine, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1    D82   5 108 0.2157 Jaga Stabilitas Harga, Satgas Pangan Polres Blitar
+    2    D75   3 148 0.1893 Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem
+    3    D24   6 239 0.1477 Sidak Produsen dan Toko Beras di Kota Blitar, Ini 
+    4    D81   2 169 0.1217 Pemerintah Siapkan Pasar Murah Cegah Harga Beras N
+    5   D119   2 263 0.1129 Sidak Beras Premium 5 Kg di Ritel, Sekda Sumsel: B
+BM25, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1    D82   5 108 5.5109 Jaga Stabilitas Harga, Satgas Pangan Polres Blitar
+    2    D24   6 239 5.2077 Sidak Produsen dan Toko Beras di Kota Blitar, Ini 
+    3    D75   3 148 4.8490 Sidak ke Pasar, Bos Bulog Temukan Harga Beras Prem
+    4    D81   2 169 4.2101 Pemerintah Siapkan Pasar Murah Cegah Harga Beras N
+    5   D119   2 263 3.7200 Sidak Beras Premium 5 Kg di Ritel, Sekda Sumsel: B
+
+----------------------------------------------------------------------------------------------------
+Query 'impor' -> token ['impor'] | dokumen cocok: 9 | df term: [9]
+TF-IDF + cosine, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1   D117   3 118 0.1444 Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus
+    2    D79   2 171 0.1443 Beras di Toko Ritel Modern Kosong, Bulog Diminta G
+    3    D12   1 100 0.1370 Pramono: Harga Pangan di Jakarta Naik Sedikit, tap
+    4    D18   1 172 0.1286 BPS Catat Harga Beras Naik September 2026, Begini 
+    5    D21   2 191 0.1250 Beras di Ritel Modern Kosong Imbas Fortifikasi Dis
+BM25, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1   D117   3 118 4.8175 Harga Beras Bisa Tembus Rp 20.000/Kg Jika RI Terus
+    2    D79   2 171 4.0364 Beras di Toko Ritel Modern Kosong, Bulog Diminta G
+    3     D3   2 172 4.0308 Ekspor Baja RI Dapat Tekanan Dunia, Tarif 50% Dipa
+    4    D66   3 318 3.9410 Cek Pasar Induk Cipinang, Titiek Soeharto Sebut St
+    5    D21   2 191 3.9267 Beras di Ritel Modern Kosong Imbas Fortifikasi Dis
+
+----------------------------------------------------------------------------------------------------
+Query 'telur' -> token ['telur'] | dokumen cocok: 41 | df term: [41]
+TF-IDF + cosine, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1   D144   3 164 0.1166 Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per
+    2    D47   6 209 0.1157 Harga Sembako Jatim Hari Ini: Minyak Goreng, Telur
+    3    D45   5 208 0.1122 Harga Sembako Jatim Hari Ini: Daging Ayam, Minyak 
+    4   D150   9 151 0.1036 Harga Telur Ayam di Sumsel Anjlok, DKPP Sebut Imba
+    5    D87   5 211 0.1035 Harga Sembako Jatim Hari Ini: Cabai Melonjak, Miny
+BM25, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1   D147  19 300 2.6384 Harga Telur Ayam di Palembang Turun Dipicu Pasokan
+    2   D150   9 151 2.5865 Harga Telur Ayam di Sumsel Anjlok, DKPP Sebut Imba
+    3     D4   8 159 2.5467 Mendag: Harga Telur Hari Ini Rp 26.200/Kg, Masih d
+    4   D143   6 205 2.3913 Harga Ayam Potong dan Telur di Palembang Naik Lagi
+    5    D47   6 209 2.3857 Harga Sembako Jatim Hari Ini: Minyak Goreng, Telur
+
+----------------------------------------------------------------------------------------------------
+Query 'bawang merah' -> token ['bawang', 'merah'] | dokumen cocok: 64 | df term: [42, 63]
+TF-IDF + cosine, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1   D144  18 164 0.1814 Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per
+    2    D10  13 141 0.1489  Harga Cabai Rawit Merah di Palembang Masih Tinggi
+    3    D11  12 230 0.1487 Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu
+    4   D108  12 200 0.1402 Harga Sembako Jatim Hari Ini: Minyak Goreng, Bawan
+    5   D105  10 205 0.1300 Naik Turun Harga Sembako di Jawa Timur, Cek Daftar
+BM25, Top-5:
+ rank doc_id  tf  dl   skor                                              judul
+    1    D36  37 202 4.4478 Jelang Panen, Harga Bawang Merah Probolinggo Anjlo
+    2    D39  24 186 4.3353 Stok Menipis, Bawang Merah di Pasar Lakessi Parepa
+    3    D34  14 103 4.2750 Bayang-bayang Anjloknya Harga di Tengah Panen Raya
+    4   D144  18 164 4.2409 Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per
+    5    D88  12 114 4.1795 Petani Bawang Merah di Nganjuk Gagal Panen gegara 
+
+RINGKASAN EKSPERIMEN 3
+              cocok  overlap_top5  rata2_dl_top5_tfidf  rata2_dl_top5_bm25  avgdl_korpus  spearman(dl,skor)_tfidf  spearman(dl,skor)_bm25
+query                                                                                                                                    
+bulog            48         0.250                146.8               212.6        213.06                   -0.193                   0.134
+satgas           18         0.429                173.6               204.2        213.06                   -0.581                  -0.473
+sidak             8         1.000                185.4               185.4        213.06                   -0.548                  -0.476
+impor             9         0.429                150.4               194.0        213.06                   -0.845                  -0.510
+telur            41         0.250                188.6               204.8        213.06                   -0.154                  -0.095
+bawang merah     64         0.111                188.0               153.8        213.06                   -0.233                  -0.216
+
+Profil panjang dokumen untuk 10 query uji:
+          rata2_dl_top10_tfidf  rata2_dl_top10_bm25  spearman(dl,skor)_tfidf  spearman(dl,skor)_bm25
+query_id                                                                                            
+Q1                       193.2                213.4                   -0.213                  -0.018
+Q2                       181.9                167.4                   -0.280                  -0.170
+Q3                       197.1                205.1                   -0.127                   0.007
+Q4                       166.2                227.7                   -0.074                   0.039
+Q5                       199.1                224.0                   -0.165                  -0.059
+Q6                       197.9                210.8                   -0.253                  -0.145
+Q7                       183.8                180.3                   -0.215                  -0.154
+Q8                       148.4                147.3                   -0.158                  -0.080
+Q9                       206.7                210.5                   -0.277                   0.020
+Q10                      226.1                246.3                   -0.017                   0.159
+avgdl korpus = 213.1 | rata-rata korelasi -> TF-IDF: -0.178 | BM25: -0.040
+
+Cara membaca: spearman(dl,skor) > 0 = dokumen panjang cenderung diuntungkan; < 0 = dokumen pendek diuntungkan.
+Interpretasi untuk laporan harus ditulis dari angka di atas (bukan disalin dari sini).
+
+====================================================================================================
+15. ANALISIS LANJUTAN
+====================================================================================================
+(a) Sensitivitas parameter BM25 (MAP, relevansi longgar):
+        b=0.25   b=0.5  b=0.75   b=1.0
+k1=0.5  0.7970  0.8052  0.8223  0.8071
+k1=1.2  0.8087  0.8293  0.8521  0.8337
+k1=1.5  0.8192  0.8376  0.8552  0.8368
+k1=2.0  0.8245  0.8371  0.8518  0.8342
+Nilai yang dipakai: k1=1.2, b=0.75 (default tugas). Dengan ~10 query selisih kecil antar sel tidak bermakna; jangan menyetel parameter lalu melaporkannya sebagai performa umum.
+
+(b) Ablasi preprocessing (pool dari konfigurasi default -> konfigurasi lain sedikit dirugikan):
+                                    konfigurasi  vocab  MAP tfidf  nDCG@10 tfidf  MAP bm25  nDCG@10 bm25
+               token saja (tanpa stopword/stem)   4477     0.7660         0.7349    0.8297        0.8685
+       stopword Sastrawi murni ('naik' dibuang)   3993     0.7537         0.7458    0.7692        0.8325
+                 stopword, 'naik' dipertahankan   3994     0.7532         0.7284    0.8108        0.8547
+         stem + stopword murni ('naik' dibuang)   2700     0.7612         0.7475    0.7799        0.8379
+stem + stopword, 'naik' dipertahankan (DEFAULT)   2701     0.7883         0.7710    0.8521        0.8825
+
+(c) Analisis kegagalan: dua query dengan AP BM25 terendah
+Q7 | 'bawang merah naik' | metode: bm25 | token query: ['bawang', 'merah', 'naik']
+ rank doc_id  label                                                                          judul
+    1    D39      2      Stok Menipis, Bawang Merah di Pasar Lakessi Parepare Tembus Rp 50 Ribu/Kg
+    2   D144      2                          Bawang Merah di Palembang Naik Jadi Rp 48 Ribu per Kg
+    3    D91      0 Harga Sayur di Pasar Peterongan Semarang Terus Naik, Pedagang: Mahalnya Stabil
+    4   D108      2                 Harga Sembako Jatim Hari Ini: Minyak Goreng, Bawang Merah Naik
+    5   D136      0               Harga Cabai-Ayam Terus Naik, Disdag Palembang Ungkap Penyebabnya
+    6    D11      0                         Harga Cabai Rawit Tambah Mahal, Hampir Rp 100 Ribu/Kg!
+    7    D42      0                 Harga Minyak Goreng Subsidi Capai Rp 20.000/Liter di Palembang
+    8    D28      0                   Harga Cabai di Palembang Masih Tinggi, Pedagang Kurangi Stok
+    9    D37      2    Harga Cabai Rawit-Bawang di Pasar Galiran Naik Jelang Galungan dan Kuningan
+   10   D105      2                          Naik Turun Harga Sembako di Jawa Timur, Cek Daftarnya
+Dokumen relevan yang TIDAK masuk top-10: ['D47']
+
+Q3 | 'operasi pasar minyak goreng' | metode: bm25 | token query: ['operasi', 'pasar', 'minyak', 'goreng']
+ rank doc_id  label                                                                    judul
+    1    D92      2 Bulog Sumsel Babel Gencarkan Operasi Pasar Migor, Dijual Rp 15.500/Liter
+    2   D143      0                       Harga Ayam Potong dan Telur di Palembang Naik Lagi
+    3    D42      1           Harga Minyak Goreng Subsidi Capai Rp 20.000/Liter di Palembang
+    4    D43      1        Harga Sembako Jatim Hari Ini: Minyak Goreng, Gas Elpiji 3 Kg Naik
+    5    D46      1     Harga Sembako Jatim Hari Ini: Minyak Goreng, Daging Ayam, Cabai Naik
+    6    D44      1     Harga Sembako Jatim Hari Ini: Minyak Goreng Naik, Daging-Cabai Turun
+    7   D142      0 Satgas Saber Pangan Sidak di Palembang, Stok dan Harga Pangan Terkendali
+    8    D48      1         Harga Sembako Jatim Hari Ini: Minyak Goreng dan Elpiji 3 Kg Naik
+    9   D108      1           Harga Sembako Jatim Hari Ini: Minyak Goreng, Bawang Merah Naik
+   10    D45      1            Harga Sembako Jatim Hari Ini: Daging Ayam, Minyak Goreng Naik
+Dokumen relevan yang TIDAK masuk top-10: []
+
+
+====================================================================================================
+16. EKSPOR HASIL
+====================================================================================================
+   C:\tugas2_ir\tugas2_ir\data\dataset_preprocessed.csv
+   C:\tugas2_ir\tugas2_ir\index\inverted_index.json
+   C:\tugas2_ir\tugas2_ir\evaluation\queries.csv
+   C:\tugas2_ir\tugas2_ir\evaluation\qrels_final.csv
+   C:\tugas2_ir\tugas2_ir\evaluation\qrels_template_v2.csv
+   C:\tugas2_ir\tugas2_ir\hasil\hasil_ranking_topk.csv
+   C:\tugas2_ir\tugas2_ir\hasil\metrik_per_query.csv
+   C:\tugas2_ir\tugas2_ir\hasil\metrik_ringkasan_longgar.csv
+   C:\tugas2_ir\tugas2_ir\hasil\metrik_boolean.csv
+   C:\tugas2_ir\tugas2_ir\hasil\metrik_signifikansi_bootstrap.csv
+   C:\tugas2_ir\tugas2_ir\hasil\eksperimen3_query_pendek.csv
+   C:\tugas2_ir\tugas2_ir\hasil\perbandingan_metode.png
+   C:\tugas2_ir\tugas2_ir\hasil\bm25_saturasi.png
+
+====================================================================================================
+RINGKASAN
+====================================================================================================
+Dokumen: 151 | vocabulary: 2701 | mode label: MANUAL
+MAP  -> TF-IDF: 0.7883 | BM25: 0.8521
+nDCG@10 -> TF-IDF: 0.7710 | BM25: 0.8825
+Selisih AP (BM25 - TF-IDF) = 0.0638, CI95 [-0.0124, 0.1539] -> TIDAK bermakna pada data ini
