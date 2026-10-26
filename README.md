@@ -42,16 +42,6 @@ pip install -r requirements.txt
 | Mesin pencari di terminal | `python -m src.search_engine` (tambah `--demo` untuk contoh tanpa input) |
 | Demo satu modul | `python -m src.preprocessing`, `python -m src.indexing`, `python -m src.boolean_retrieval`, `python -m src.tfidf_retrieval`, `python -m src.bm25`, `python -m src.sanity_tests` |
 
-## Label relevansi (wajib untuk evaluasi yang valid)
-Evaluasi membutuhkan penilaian relevansi buatan manusia.
-1. Jalankan `python main.py`. Program membuat `evaluation/qrels_template_v2.csv`.
-   Label lama (berkas `*qrels*.csv` di folder `evaluation/` atau root) dipakai ulang otomatis.
-2. Isi kolom `relevance` pada baris berstatus `BARU`: `2` = sangat relevan, `1` = relevan sebagian, `0` = tidak relevan.
-3. Simpan sebagai `evaluation/qrels_labeled_v2.csv`, lalu jalankan ulang `python main.py`.
-4. Pastikan log menampilkan `QRELS_MODE = MANUAL`. Selama `DEMO-OTOMATIS` atau `MANUAL-BELUM-LENGKAP`, hasil belum final.
-
-Jangan melabeli langsung di `qrels_template_v2.csv` (berkas itu dibuat ulang setiap kali `main.py` dijalankan).
-
 ## Contoh query
 | Query | Metode |
 |---|---|
