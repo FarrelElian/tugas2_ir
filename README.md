@@ -2,6 +2,7 @@
 
 > **Hasil eksekusi sudah tersimpan** di `hasil/run_log.txt` (seluruh output terminal), beserta CSV dan grafik
 > di `hasil/`. langsung dapat membaca hasil tanpa menjalankan ulang; untuk mereproduksi, jalankan `python main.py`.
+> **Laporan Tugas 2** ada di `laporan/LaporanTugas2.docx`
 > Jika dataset atau label diubah, jalankan ulang agar log ikut diperbarui.
 
 ## Struktur folder
